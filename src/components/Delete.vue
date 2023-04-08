@@ -1,5 +1,35 @@
-<script setup>
+<script setup lang="ts">
+// get the list of vns from the backend
+import axios from 'axios';
+import { reactive } from 'vue';
 
+// let VirtualNetworks = reactive([{id: 1, name: "test", created_at: "2021-06-01", updated_at: "2021-06-01"}])
+let VirtualNetworks = reactive([])
+axios.get('http://localhost:8000/api/virtualNetworks/')
+      .then((response) => {
+        let vns = JSON.stringify(response.data)
+        vns = JSON.parse(vns)
+        addVns(vns['virtualnetworks'])
+        // VirtualNetworks = vns['virtualnetworks']
+        // console.log(VirtualNetworks)
+      })
+      .catch((error) => console.log(error));
+
+function addVns(vns){
+  VirtualNetworks.push(...vns)
+}
+function deleteVn(id){
+  console.log(id)
+  // TODO: delete the vn from the database
+
+  axios.get('http://localhost:8000/api/Deletevn/' + id)
+      .then((response) => {
+        console.log(response)
+      })
+      .catch((error) => console.log(error));
+}
+
+console.log(VirtualNetworks)
 </script>
 
 <template>
@@ -19,18 +49,16 @@
         </tr>
       </thead>
       <tbody>
-        <!-- <tr v-for="item in data" :key="item.virtualNetworkId"> -->
-          <tr>
-            <td>1</td>
-            <td>OnosVn</td>
-            <td>2023-01-2</td>
-            <td>2023-01-4</td>
+          <tr v-for="Vn in VirtualNetworks">
+            <td>{{ Vn.id }}</td>
+            <td>{{Vn.name}}</td>
+            <td>{{ Vn.created_at }}</td>
+            <td>{{ Vn.updated_at }}</td>
             <td>1000</td>
             <td>3</td>
             <td>2</td>
-            <td><button class="button-40">Delete</button></td>
+            <td><button @click="deleteVn(Vn.id)" class="button-40" :id="Vn.id">Delete</button></td>
           </tr>
-        <!-- </tr> -->
       </tbody>
     </table>
   </div>

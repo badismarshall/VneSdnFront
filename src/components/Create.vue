@@ -3,6 +3,8 @@ import { Nodes, Edges, Layouts } from "v-network-graph"
 import * as vNG from "v-network-graph"
 import { reactive, ref, onMounted, onUnmounted, computed, watch } from "vue"
 import { defineConfigs, VNetworkGraphInstance, EventHandlers } from "v-network-graph"
+import { useStore } from "vuex";
+import axios from "axios";
 
 //  To test the graph, we need to create some nodes and edges.
 const nodes: Nodes = reactive({
@@ -150,10 +152,12 @@ const selectedEdges = ref<string[]>([])
 
 // fuction to add nodes
 function addNode() {
+  if (store.state.maxdevices == Object.keys(nodes).length) 
+    return
   console.log("add node")
   const nodeId = `node${nextNodeIndex.value}`
   const name = `SW${nextNodeIndex.value}`
-  const NodeCapacity = 3
+  const NodeCapacity = 0
   nodes[nodeId] = { name, NodeCapacity }
   nextNodeIndex.value++
   console.log(nodes)
@@ -163,6 +167,12 @@ function addNode() {
 function removeNode() {
   for (const nodeId of selectedNodes.value) {
     delete nodes[nodeId]
+    // remove the edges connected to the node
+    for (const edgeId of Object.keys(edges)) {
+      if (edges[edgeId].source === nodeId || edges[edgeId].target === nodeId) {
+        delete edges[edgeId]
+      }
+    }
   }
 }
 
@@ -171,7 +181,7 @@ function addEdge() {
   if (selectedNodes.value.length !== 2) return
   const [source, target] = selectedNodes.value
   const edgeId = `edge${nextEdgeIndex.value}`
-  const LinkCapacity = 5
+  const LinkCapacity = 0
   edges[edgeId] = { source, target, LinkCapacity }
   traffics[source] = { ...traffics[source], [target]: 0 }
   traffics[target] = { ...traffics[target], [source]: 0 }
@@ -184,6 +194,20 @@ function removeEdge() {
     delete edges[edgeId]
   }
 }
+
+let toastclass = "initail"
+function create() {
+  // appel au backend 
+  axios.post('http://localhost:8000/api/CreateVn', {
+    devices: nodes,
+    links: edges
+  })
+}
+
+const store = useStore()
+console.log(store.state.maxdevices)
+
+
 
 </script>
 <template>
@@ -271,6 +295,7 @@ function removeEdge() {
       </div>
     </div>
   </div>
+  <form  id="linkform" >
   <div class="tables">
 
 
@@ -291,19 +316,25 @@ function removeEdge() {
           <input type="text" />
         </td>
       </tr> -->
-      <tr v-for="edgeID in edges" :key="edgeID.name">
-        <td>{{  1}}</td>
-        <td>{{ edgeID.source }}</td>
-        <td>{{ edgeID.target }}</td>
-        <td>
-          <div class="form__group field">
-            <input type="number" class="form__field" placeholder="LinkCapacity" name="name" id='name' required v-model="edgeID.LinkCapacity"/>
-            <label for="name" class="form__label">Mbps</label>
-          </div>
-        </td>
-      </tr>
+
+      <!-- @submit.prevent="create" -->
+      
+        <tr v-for="edgeID in edges" :key="edgeID.name">
+          <td>{{  1}}</td>
+          <td>{{ edgeID.source }}</td>
+          <td>{{ edgeID.target }}</td>
+          <td>
+            <div class="form__group field">
+              <input type="number" min="0" class="form__field" placeholder="LinkCapacity" :name='edgeID.source' :id='edgeID.source' required v-model="edgeID.LinkCapacity"/>
+              <label for="name" class="form__label">Mbps</label>
+            </div>
+          </td>
+        </tr>
+
     </tbody>
   </table>
+<!-- </form>
+<form  id="linkform" > -->
   <table class="styled-table">
     <thead>
       <tr>
@@ -316,15 +347,20 @@ function removeEdge() {
         <td>{{ nodeID.name }}</td>
         <td>
           <div class="form__group field">
-            <input type="number" class="form__field" placeholder="NodeCapacity" name="name" id='name' required v-model="nodeID.NodeCapacity"/>
-            <label for="name" class="form__label">Mbps</label>
+            <input type="number" min="0"  class="form__field" placeholder="NodeCapacity" name="name" id='name' required v-model="nodeID.NodeCapacity"/>
+            <label for="name" class="form__label">Cycle</label>
           </div>
         </td>
       </tr>
     </tbody>
   </table>
-</div>
 
+</div>
+</form>
+<div class="create">
+  <button @click="create" class="button-40" type="submit" form="linkform">Create</button>
+  <!-- <div ref="snackbar" id="snackbar" :class="toastclass" >Some text some message..</div> -->
+</div>
   </div>
 </template>
 
@@ -333,6 +369,59 @@ function removeEdge() {
 *{
   font-family: 'Dosis', sans-serif;
 } */
+/* Toast */
+#snackbar {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: #333; /* Black background color */
+  color: #fff; /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 2px; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the snackbar */
+  bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+  visibility: visible; /* Show the snackbar */
+  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+  However, delay the fade out process for 2.5 seconds */
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+/* ToastEnd -------*/
+
+.create{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+}
 .demo-control-panel {
   display: flex;
   flex-direction: row;

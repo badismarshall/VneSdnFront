@@ -54,88 +54,111 @@ const equalsCheck = (a, b) => {
     return JSON.stringify(a) === JSON.stringify(b);
 }
 
-setInterval(() => {
-  axios.get('http://localhost:8000/api/topo/')
+axios.get('http://localhost:8000/api/topo/')
       .then((response) => {
         let links = JSON.stringify(response.data)
         links = JSON.parse(links)
-
-        if (FirstPool == true){
-            lastLinks = links['links']
-            FirstPool = false
-            links['links'].forEach((link) => {
-              addEdge(link);
+        links['links'].forEach((link) => {
+          addEdge(link);
         })
-        }
-        if(!equalsCheck(lastLinks, links['links'])){
-          console.log("topochanged")
-          if (links['links'].length > lastLinks.length){
-
-            for (let link of links['links']){
-              let a = false
-              for (let lastLink of lastLinks){
-                if (link['source'] == lastLink['source'] && link['target'] == lastLink['target']){
-                  a = true
-                  break
-                }
-              }
-              if (a == false){
-                console.log(link)
-                // add link
-                addEdge(link)
-                break
-              }
-            }
-          }
-          else{
-            for (let lastLink of lastLinks){
-              let b = false
-              for (let link of links['links']){
-                if (link['source'] == lastLink['source'] && link['target'] == lastLink['target']){
-                  b = true
-                  break
-                }
-              }
-              if (b == false){
-                console.log(lastLink)
-                // delete link
-                removeEdge(lastLink)
-                break
-              }
-            }
-          }
-          links['links'].forEach((link, i) => {
-            if(!equalsCheck(lastLinks[i], link)){
-              
-              // changedElements.push(link);
-              // changedIndices.push(i);
-            }
-          })
-        }
-        console.log(links['links'])
-        console.log(lastLinks)
-        // console.log(changedElements)
-        // console.log(changedIndices)
-        
         lastLinks = links['links']
       })
       .catch((error) => console.log(error));
-}, 5000)
 
-// axios.get('http://localhost:8000/api/topo/')
+// setInterval(() => {
+//   axios.get('http://localhost:8000/api/topo/')
 //       .then((response) => {
 //         let links = JSON.stringify(response.data)
-//         links = JSON.parse(links)                  
-//         links['links'].forEach((link) => {
-//           addEdge(link);
+//         links = JSON.parse(links)
+
+//         if (FirstPool == true){
+//             lastLinks = links['links']
+//             FirstPool = false
+//             links['links'].forEach((link) => {
+//               addEdge(link);
 //         })
+//         }
+//         if(!equalsCheck(lastLinks, links['links'])){
+//           if (links['links'].length > lastLinks.length){
+
+//             for (let link of links['links']){
+//               let a = false
+//               for (let lastLink of lastLinks){
+//                 if (link['source'] == lastLink['source'] && link['target'] == lastLink['target']){
+//                   a = true
+//                   break
+//                 }
+//               }
+//               if (a == false){ 
+//                 // add link
+//                 addEdge(link)
+//                 break
+//               }
+//             }
+//           }
+//           else{
+//             for (let lastLink of lastLinks){
+//               let b = false
+//               for (let link of links['links']){
+//                 if (link['source'] == lastLink['source'] && link['target'] == lastLink['target']){
+//                   b = true
+//                   break
+//                 }
+//               }
+//               if (b == false){
+//                 // delete link
+//                 removeEdge(lastLink)
+//                 break
+//               }
+//             }
+//           }
+//           links['links'].forEach((link, i) => {
+//             if(!equalsCheck(lastLinks[i], link)){
+              
+//               // changedElements.push(link);
+//               // changedIndices.push(i);
+//             }
+//           })
+//         }
+//         // console.log(links['links'])
+//         // console.log(lastLinks)
+
+//         lastLinks = links['links']
 //       })
 //       .catch((error) => console.log(error));
+// }, 5000)
+
+let metrics = []
+
+
+
+// edges[edge].bandwidth = (data['statistics'][statistics]['delta']['bytesReceived'] + data['statistics'][statistics]['delta']['bytesSent']) * 8 / 1000
+
+setInterval(()=>{
+  axios.get('http://localhost:8000/api/statistics/').then((response) => {
+    let data = JSON.stringify(response.data)
+    data = JSON.parse(data)
+    console.log(data['statistics'][0])
+    for(let edge in edges){
+      for (let x = 0; x < data['statistics'].length; x++){
+        if (edges[edge].source == data['statistics'][x]['device']){
+          console.log(data['statistics'][x]['ports'][edges[edge].port - 1]['bytesSent'])
+          if(data['statistics'][x]['ports'][edges[edge].port - 1]['bytesSent'] > 700){
+            edges[edge].color = 'red'
+          }
+          else{
+            edges[edge].color = "#4466cc"
+          }
+          break
+        }
+      }
+    }
+  })}, 2000)
 
 let nodes = reactive({})
 const edges = reactive({})
+
 const layouts = data.layouts
-const store = useStore()
 const nextNodeIndex = ref(0)
 const nextEdgeIndex = ref(0)
 
@@ -149,6 +172,7 @@ function addNode(node) {
   const NodeCapacity = 3
   nodes[nodeId] = { name, NodeCapacity }
   nextNodeIndex.value++
+  store.state.maxdevices = nextNodeIndex.value 
   // console.log(nodes)
 }
 
@@ -163,10 +187,12 @@ function addEdge(link) {
 
   const source = link['source']
   const target = link['target']
+  const port = link['port']
+  const color = "#4466cc"
 
   const edgeId = `edge${nextEdgeIndex.value}`
   const LinkCapacity = 5
-  edges[edgeId] = { source, target, LinkCapacity }
+  edges[edgeId] = { source, target, LinkCapacity, port, color }
   // traffics[source] = { ...traffics[source], [target]: 0 }
   // traffics[target] = { ...traffics[target], [source]: 0 }
   nextEdgeIndex.value++
@@ -183,7 +209,9 @@ function removeEdge(link) {
 
 var selectedNodes = ref<string[]>([]) 
 
-
+setTimeout(() => {
+  console.log(edges)
+}, 1000)
 const configs = reactive(
   vNG.defineConfigs({
     view: {
@@ -221,6 +249,14 @@ const configs = reactive(
         text: "name",
       },
     },
+    edge: {
+      normal: {
+        color: edge => edge.color,
+        animate: edge => (edge.color == '#4466cc' ? false : true),
+        dasharray: edge => (edge.color == '#4466cc' ? 0 : 5),
+        
+      }
+    }
   })
 )
 
@@ -275,16 +311,20 @@ function buildNetwork(count: number, nodes: vNG.Nodes, edges: vNG.Edges) {
 //   },
 // }
 const name = computed(() => store.state.name)
+const store = useStore();
 
-watch(name, (newname, oldname)=>{
-  console.log("watcher")
-  if(name  == ref("")){
+console.log(store.state.maxdevices)
 
-  }
-  else{
-    // nodes[name].color = '#0ee6e2'
-  }
-});
+// watch(name, (newname, oldname)=>{
+//   console.log("watcher")
+//   if(name  == ref("")){
+
+//   }
+//   else{
+//     // nodes[name].color = '#0ee6e2'
+//   }
+// });
+
 </script>
 
 

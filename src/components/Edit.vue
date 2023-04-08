@@ -1,18 +1,40 @@
+<script setup lang="ts">
+import { onMounted } from 'vue';
+import HelloWorld from './HelloWorld.vue';
+import VirtualGraph from './VirtualGraph.vue';
+import axios from 'axios';
+import { reactive } from 'vue';
 
+let VirtualNetworks = reactive([])
+axios.get('http://localhost:8000/api/virtualNetworks/')
+      .then((response) => {
+        let vns = JSON.stringify(response.data)
+        vns = JSON.parse(vns)
+        addVns(vns['virtualnetworks'])
+        // VirtualNetworks = vns['virtualnetworks']
+        // console.log(VirtualNetworks)
+      })
+      .catch((error) => console.log(error));
+
+function addVns(vns){
+  VirtualNetworks.push(...vns)
+}
+
+</script>
 <template>
   <div class="container">
     <select class="select  form-select" aria-label="Default select example">
       <option selected>Chose a VN</option>
-      <option value="1">OnosVn</option>
+      <!-- <option value="1">OnosVn</option>
       <option value="2">CiscoVn</option>
-      <option value="3">HuwaeiVN</option>
+      <option value="3">HuwaeiVN</option> -->
+      <option v-for="Vn in VirtualNetworks" :value="Vn.id">{{Vn.name}}</option>
     </select>
     <div class="first"> 
         <HelloWorld class="networkx"/>
         <VirtualGraph class="networkx"/>
     </div>
     
-   
   </div>
 </template>
 
@@ -75,9 +97,3 @@
   margin: 0% 1%;
 }
 </style>
-<script setup>
-import { onMounted } from 'vue';
-import HelloWorld from './HelloWorld.vue';
-import VirtualGraph from './VirtualGraph.vue';
-
-</script>
