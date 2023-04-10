@@ -3,15 +3,14 @@
 import axios from 'axios';
 import { reactive } from 'vue';
 
-// let VirtualNetworks = reactive([{id: 1, name: "test", created_at: "2021-06-01", updated_at: "2021-06-01"}])
+
 let VirtualNetworks = reactive([])
 axios.get('http://localhost:8000/api/virtualNetworks/')
       .then((response) => {
         let vns = JSON.stringify(response.data)
         vns = JSON.parse(vns)
         addVns(vns['virtualnetworks'])
-        // VirtualNetworks = vns['virtualnetworks']
-        // console.log(VirtualNetworks)
+
       })
       .catch((error) => console.log(error));
 

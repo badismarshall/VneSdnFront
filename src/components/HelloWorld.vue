@@ -13,8 +13,6 @@ import {
 } from "v-network-graph/lib/force-layout"
 import { remove } from "@vue/shared";
 
-
-
 // get the nodes topology from the backend
 // setInterval(() =>{
 //   axios.get('http://localhost:8000/api/devices/')

@@ -8,12 +8,12 @@ import axios from "axios";
 
 //  To test the graph, we need to create some nodes and edges.
 const nodes: Nodes = reactive({
-  node1: { name: "SW1", NodeCapacity: 3 },
-  node2: { name: "SW2", NodeCapacity: 3 },
-  node3: { name: "SW3", NodeCapacity: 3 },
-  node4: { name: "SW4", NodeCapacity: 3 },
-  node5: { name: "SW5", NodeCapacity: 3 },
-  node6: { name: "SW6", NodeCapacity: 3 },
+  node1: { name: "node1", NodeCapacity: 3 },
+  node2: { name: "node2", NodeCapacity: 3 },
+  node3: { name: "node3", NodeCapacity: 3 },
+  node4: { name: "node4", NodeCapacity: 3 },
+  node5: { name: "node5", NodeCapacity: 3 },
+  node6: { name: "node6", NodeCapacity: 3 },
 })
 
 const edges: Edges = reactive({
@@ -198,10 +198,11 @@ function removeEdge() {
 let toastclass = "initail"
 function create() {
   // appel au backend 
-  axios.post('http://localhost:8000/api/CreateVn', {
+  axios.post('http://localhost:8000/api/Createvn/', {
     devices: nodes,
-    links: edges
-  })
+    links: edges,
+    
+  },)
 }
 
 const store = useStore()

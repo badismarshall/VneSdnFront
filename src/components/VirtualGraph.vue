@@ -3,6 +3,7 @@ import { reactive, ref, computed, watch } from "vue"
 import * as vNG from "v-network-graph"
 import data from "../../data2";
 import { useStore } from "vuex";
+import axios from "axios";
 
 import {
   ForceLayout,
@@ -10,16 +11,75 @@ import {
   ForceEdgeDatum,
 } from "v-network-graph/lib/force-layout"
 import { generateCodeFrame } from "@vue/shared";
+const props = defineProps<{
+  vnid: Number
+}>()
+
+let CurentVnId = props.vnid
+// watch the vnid and update the graph
+watch(() => props.vnid, (newVnid) => {
+  if (newVnid == 0) return
+  console.log("newVnid", newVnid)
+  CurentVnId = newVnid
+  // console.log("CurentVnId", CurentVnId)
+  // update the graph
+  // update Nodes
+  updateNodesandEdges(newVnid)
+  // update Edges
+
+})
+function updateNodesandEdges(Vnid){
+  console.log("updateNodes")
+  nodes = reactive({})
+  edges = reactive({})
+  axios.get('http://localhost:8000/api/Getvn/' + Vnid).then((response) => {
+    let vn = JSON.stringify(response.data)
+    vn = JSON.parse(vn)
+    let tempNodes = vn['logicalnodes']
+    let tempEdges = vn['logicallinks']
+    for (let i = 0; i < tempNodes.length; i++) {
+      const node = tempNodes[i];
+      addNode(node)
+    }
+    // console.log("nodes", nodes)
+    for (let i = 0; i < tempEdges.length; i++) {
+      const edge = tempEdges[i];
+      addEdge(edge)
+    }
+    // console.log("edges", edges)
+    emitVn("selectedVn", vn)
+})
+}
+
+const emitVn = defineEmits<{
+  (event: "selectedVn", payload: {}): void
+}>()
+
+function addNode(node) {
+  const nodeId = `node${node['id']}`
+  const name = node['name']
+  const NodeCapacity = node['capacity']
+  nodes[nodeId] = { name, NodeCapacity }
+}
+
+function addEdge(edge) {
+  const edgeId = edge['id']
+  const source = `node${edge['source_logical_node']}`
+  const target = `node${edge['target_logical_node']}`
+  const linkCapacity = edge['bandwidth']
+  edges[edgeId] = { source, target, linkCapacity }
+}
 
 const NODE_COUNT = 20
 
-// const nodes = reactive({})
-// const edges = reactive({})
-var nodes = reactive(data.nodes)
-var edges = data.edges
+let nodes = reactive({})
+let edges = reactive({})
+// var nodes = reactive(data.nodes)
+// var edges = data.edges
 // var layouts = ref(reactive({
 //   nodes: {},
 // }))
+// var layouts = reactive({})
 const layouts = ref(data.layouts)
 
 // ref="graph"
@@ -101,9 +161,9 @@ const configs = reactive(
   })
 )
 //  to emit events to the parent component
-const emit = defineEmits<{
-  (event: "hovred", payload: { node: string }): void
-}>()
+// const emit = defineEmits<{
+//   (event: "hovred", payload: { node: string }): void
+// }>()
 
 const store = useStore();
 
