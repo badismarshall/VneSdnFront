@@ -23,7 +23,7 @@ function visualize(){
   console.log(selectedVn.value)
 }
 watch(selectedVn, (val) => {
-  
+  console.log('selectedVn changed to: ', val)
 })
 
 function recivedData(data){
@@ -41,8 +41,8 @@ function recivedData(data){
       <button @click="visualize" class="button-40">Visualize</button>
   </div>
     <div class="first"> 
-        <HelloWorld class="networkx"/>
-        <VirtualGraph class="networkx" :vnid="selectedVn" @selctedVn="recivedData"/>
+        <HelloWorld class="networkx" :vnid="selectedVn"/>
+        <VirtualGraph class="networkx" :vnid="selectedVn" @selctevent="recivedData"/>
     </div>
     
   </div>

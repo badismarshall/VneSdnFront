@@ -47,12 +47,12 @@ function updateNodesandEdges(Vnid){
       addEdge(edge)
     }
     // console.log("edges", edges)
-    emitVn("selectedVn", vn)
+    emitVn("selctevent", vn)
 })
 }
 
 const emitVn = defineEmits<{
-  (event: "selectedVn", payload: {}): void
+  (event: "selctevent", payload: {}): void
 }>()
 
 function addNode(node) {

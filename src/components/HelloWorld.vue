@@ -48,6 +48,39 @@ let lastLinks = []
 const changedElements = [];
 const changedIndices = [];
 
+const props = defineProps<{
+  vnid: Number
+}>()
+
+//  watch the vnid and update the graph
+watch(() => props.vnid, (newVnid) => {
+  if (newVnid == 0) return
+  axios.get("http://localhost:8000/api/Getvn/" + newVnid)
+    .then((response) => {
+      let vn = JSON.stringify(response.data)
+      vn = JSON.parse(vn)
+      let tempNodes = vn['logicalnodes']
+      let tempEdges = vn['logicallinks']
+
+      // for (let i = 0; i < tempNodes.length; i++) {
+      //   const node = tempNodes[i];
+      //   nodes[node['substrate_node']] = node
+      // }
+
+      for (let i = 0; i < tempEdges.length; i++) {
+        const edge = tempEdges[i]
+        changeEdgeColor(edge)
+       
+      }
+    })
+  
+
+})
+function changeEdgeColor(edge){
+  for (let sublink in edge['substrate_links'] ){
+    edges[`edge${sublink}`].color = "green"
+  }
+}
 const equalsCheck = (a, b) => {
     return JSON.stringify(a) === JSON.stringify(b);
 }
@@ -145,7 +178,8 @@ setInterval(()=>{
             edges[edge].color = 'red'
           }
           else{
-            edges[edge].color = "#4466cc"
+            if(edges[edge].color == 'red')
+              edges[edge].color = "#4466cc"
           }
           break
         }
@@ -166,6 +200,7 @@ function addNode(node) {
   // const nodeId = `node${nextNodeIndex.value}`
   const nodeId = node
   const name = `SW${nextNodeIndex.value}`
+  const selected = false
   // const name = node
   const NodeCapacity = 3
   nodes[nodeId] = { name, NodeCapacity }
@@ -245,6 +280,12 @@ const configs = reactive(
         margin: 4,
         direction: "south",
         text: "name",
+      },
+      focusring: {
+        visible: true,
+        color: "#000000",
+        width: 2,
+        dasharray: "0",
       },
     },
     edge: {

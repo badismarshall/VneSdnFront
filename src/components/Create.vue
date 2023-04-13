@@ -196,13 +196,15 @@ function removeEdge() {
 }
 
 let toastclass = "initail"
+let Vname = ""
 function create() {
   // appel au backend 
   axios.post('http://localhost:8000/api/Createvn/', {
     devices: nodes,
     links: edges,
-    
-  },)
+    name: Vname,
+  },).catch((err) => console.log("error in post"))
+  console.log(Vname)
 }
 
 const store = useStore()
@@ -357,9 +359,20 @@ console.log(store.state.maxdevices)
   </table>
 
 </div>
+<div class="VnNameField">
+  <div class="input-group">
+        <input type="text" placeholder="Chose Vn Name" id="message" required v-model="Vname"/>
+  </div>
+</div>
 </form>
+
 <div class="create">
-  <button @click="create" class="button-40" type="submit" form="linkform">Create</button>
+  <!-- <div class="form__group field">
+  <input type="text" v-model="nameVn" placeholder="Enter name of Vn" required name="Vname"/>
+  <label for="Vname" class="form__label">Vn Name</label>
+</div> -->
+
+  <button @click="create" class="button-40">Create</button>
   <!-- <div ref="snackbar" id="snackbar" :class="toastclass" >Some text some message..</div> -->
 </div>
   </div>
@@ -418,6 +431,12 @@ console.log(store.state.maxdevices)
 /* ToastEnd -------*/
 
 .create{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+}
+.VnNameField{
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -581,7 +600,48 @@ console.log(store.state.maxdevices)
   padding: 0%;
   height: max-content;
 }
-
+.input-group {
+	position: relative;
+}
+.input-group input {
+	display: block;
+	padding: 10px;
+	border: none;
+	outline: none;
+	border-radius: 4px;
+  border-color: #1e293b;
+  border: 1px solid #1e293b;
+	font: inherit;
+}
+.input-group input::placeholder {
+	transition: opacity 0.25s;
+}
+.input-group input:focus::placeholder {
+	opacity: 0;
+}
+.input-group label {
+	position: absolute;
+	top: -30px;
+	left: -26px;
+	line-height: 16px;
+	color: #fff;
+	display: inline-flex;
+	column-gap: 10px;
+	transition: transform 0.25s, opacity 0.25s;
+}
+.input-group label::before {
+	content: url('../src/assets/vue.svg'); 
+	opacity: 0;
+}
+.input-group:focus-within label,
+.input-group input:valid ~ label {
+	transform: translateX(26px);
+}
+.input-group:focus-within label::before,
+.input-group input:valid ~ label::before {
+	opacity: 1;
+	transition-delay: 0.1s;
+}
 </style>
 
 
