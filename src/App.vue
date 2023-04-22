@@ -6,7 +6,6 @@ import VirtualGraph from './components/VirtualGraph.vue';
 import Ceeate from './components/Create.vue';
 import Edit from './components/Edit.vue';
 import Delete from './components/Delete.vue';
-
 import Sidebar from './components/Sidebar.vue';
 
 

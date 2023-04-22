@@ -55,6 +55,11 @@ const props = defineProps<{
 //  watch the vnid and update the graph
 watch(() => props.vnid, (newVnid) => {
   if (newVnid == 0) return
+  if (Edgechangedcolor.length > 0){
+    Edgechangedcolor.forEach((link) => {
+      edges[link].color = "#4466cc"
+    })
+  }
   axios.get("http://localhost:8000/api/Getvn/" + newVnid)
     .then((response) => {
       let vn = JSON.stringify(response.data)
@@ -77,9 +82,56 @@ watch(() => props.vnid, (newVnid) => {
 
 })
 function changeEdgeColor(edge){
-  for (let sublink in edge['substrate_links'] ){
-    edges[`edge${sublink}`].color = "green"
+  console.log("edge", edge['substrate_links'])
+  for (let i = 0; i < edge['substrate_links'].length; i++){
+    axios.get("http://localhost:8000/api/Getsubstratelinksbyid/" + edge['substrate_links'][i]).then((response) => {
+      let sublink = JSON.stringify(response.data)
+      sublink = JSON.parse(sublink)
+      console.log(sublink)
+
+      let sourcesubID = sublink["substratelinks"]['source_substrate_node']
+      let targetsubID = sublink["substratelinks"]['target_substrate_node']
+      // edges[`edge${sublink['id']}`].color = "green"
+      console.log(sourcesubID, targetsubID)
+      Getsubstratenodebyid(sourcesubID, targetsubID)   
+    })
+    // edges[`edge${sublink}`].color = "green"
   }
+}
+function Getsubstratenodebyid(sourceId, targetID){
+  axios.get("http://localhost:8000/api/Getsubstratenodesbyid/" + sourceId)
+      .then((response) => {
+        let nodeS = JSON.stringify(response.data)
+        nodeS = JSON.parse(nodeS)
+        console.log(nodeS)
+        let source = nodeS["substratenodes"]['name']
+        axios.get('http://localhost:8000/api/Getsubstratenodesbyid/'+ targetID).then((response) => {
+          let nodeT = JSON.stringify(response.data)
+          nodeT = JSON.parse(nodeT)
+          console.log(nodeT)
+          let target = nodeT["substratenodes"]['name']
+          console.log("source", source, "target", target)
+
+          findedge(source, target)
+        })       
+      })
+      .catch((error) => console.log(error));
+}
+function findedge(source, target){
+  for (let link in edges){
+        // console.log("source", source, "target", target)
+        if ((edges[link].source == source && edges[link].target == target) 
+          || 
+          (edges[link].source == target && edges[link].target == source)){
+            console.log("dadadadadadadada")
+            changecolorofedge(link)    
+        }
+      }
+}
+let Edgechangedcolor = reactive([])
+function changecolorofedge(link){
+  Edgechangedcolor.push(link)
+  edges[link].color = "green"
 }
 const equalsCheck = (a, b) => {
     return JSON.stringify(a) === JSON.stringify(b);
@@ -198,8 +250,9 @@ const nextEdgeIndex = ref(0)
 function addNode(node) {
   console.log("add node")
   // const nodeId = `node${nextNodeIndex.value}`
-  const nodeId = node
-  const name = `SW${nextNodeIndex.value}`
+  const nodeId = node["id"]
+  // const name = `SW${nextNodeIndex.value}`
+  const name = `SW${node['chid']}`
   const selected = false
   // const name = node
   const NodeCapacity = 3

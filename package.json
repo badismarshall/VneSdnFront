@@ -9,7 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@carbon/charts": "^1.7.1",
+    "@carbon/charts-vue": "^1.7.1",
+    "@carbon/styles": "^1.27.0",
     "axios": "^1.3.4",
+    "d3": "^7.8.4",
+    "datatables.net-dt": "^1.13.4",
+    "dom-to-image": "^2.6.0",
+    "dom-to-image-more": "^3.1.4",
+    "jquery": "^3.6.4",
     "sass": "^1.60.0",
     "v-network-graph": "^0.8.2",
     "vue": "^3.2.47",

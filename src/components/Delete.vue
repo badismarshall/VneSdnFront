@@ -1,7 +1,10 @@
-<script setup lang="ts">
+<script setup>
 // get the list of vns from the backend
 import axios from 'axios';
-import { reactive } from 'vue';
+import { reactive, onMounted, render, ref } from 'vue';
+import DataTable from 'datatables.net-dt';
+import 'datatables.net-dt/css/jquery.dataTables.css';
+import $ from 'jquery';
 
 
 let VirtualNetworks = reactive([])
@@ -17,24 +20,89 @@ axios.get('http://localhost:8000/api/virtualNetworks/')
 function addVns(vns){
   VirtualNetworks.push(...vns)
 }
-function deleteVn(id){
+const mymodel = ref(null)
+function deleteVn(){
+  let id = $("#exampleModal").find(".contentvn").attr('id')
   console.log(id)
   // TODO: delete the vn from the database
 
-  axios.get('http://localhost:8000/api/Deletevn/' + id)
-      .then((response) => {
-        console.log(response)
-      })
-      .catch((error) => console.log(error));
-}
+  // axios.get('http://localhost:8000/api/Deletevn/' + id)
+  //     .then((response) => {
+  //       console.log(response)
+  //       // TODO: delete the vn from the table
+  //       myTable.ajax.reload();
+        
+  //     })
+  //     .catch((error) => console.log(error));
+  // hide the modal
+  // const mymodel = document.querySelector('#exampleModal')
+    mymodel.value.hide()
+  $("#exampleModal").modal('hide')
 
-console.log(VirtualNetworks)
+}
+let selectedVn = reactive("das");
+let myTable;
+onMounted(() => {
+    myTable = new DataTable('#myTable', {
+    data: VirtualNetworks,
+    ajax: {
+      url: 'http://localhost:8000/api/virtualNetworks/',
+      dataSrc: 'virtualnetworks'
+    },
+    columns: [
+      { data: 'id' },
+      { data: 'name' },
+      { data: 'created_at' },
+      { data: 'updated_at' },
+      {defaultContent: "<td>1000</td "},
+      {defaultContent: "<td>3</td "},
+      {defaultContent: "<td>2</td "},
+      // { data: 'maxBandwith' },
+      // { data: 'numberOfNodes' },
+      // { data: 'numberOfLinks' },
+      // {defaultContent: '<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal id=' + this. + '">Delete</button>'},
+      {
+        data: 'name',
+        render: function (data, type, row, meta) {
+        return '<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal" id=' + row.id + ' data-bs-whatever='+ data + '>Delete</button>'
+      }}
+    ],
+    // columnDefs: [
+    //   {
+    //     target: 7,
+    //     // defaultContent: "<button class='button-40'>Delete</button>"
+    //     render: function (data, type, row, meta) {
+    //       // return '<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#exampleModal">Delete</button>';
+    //       return '<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal id=' + row.id + '">Delete</button>'
+    //     }
+    //   }
+    // ]
+  });
+  const exampleModal = document.querySelector('#exampleModal')
+
+  exampleModal.addEventListener('show.bs.modal', function (event) {
+  // Button that triggered the modal
+  const button = event.relatedTarget
+  console.log(button.id)
+  // Extract info from data-bs-* attributes
+  const recipient = button.getAttribute('data-bs-whatever')
+  $("#exampleModal").find(".contentvn").text("Are you sure you want to delete " + recipient + " Vn " +  " ?")
+  $("#exampleModal").find(".contentvn").attr('id', button.id)
+})
+})
+
+
+
+
+
+
 </script>
 
 <template>
   <div class="container">
     <h1>List of Vns</h1>
-    <table class="styled-table">
+    <table id="myTable" ref="myTable" class="display styled-table"> 
+      <!-- class="styled-table"> -->
       <thead>
         <tr>
           <th>virtualNetworkId</th>
@@ -48,18 +116,35 @@ console.log(VirtualNetworks)
         </tr>
       </thead>
       <tbody>
-          <tr v-for="Vn in VirtualNetworks">
+          <!-- <tr v-for="Vn in VirtualNetworks">
             <td>{{ Vn.id }}</td>
             <td>{{Vn.name}}</td>
             <td>{{ Vn.created_at }}</td>
             <td>{{ Vn.updated_at }}</td>
             <td>1000</td>
-            <td>3</td>
+            <td>3</td> 
             <td>2</td>
             <td><button @click="deleteVn(Vn.id)" class="button-40" :id="Vn.id">Delete</button></td>
-          </tr>
+          </tr> -->
       </tbody>
     </table>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" ref="mymodel">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Delete Vn</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="contentvn"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button @click="deleteVn()" type="button" class="btn  btn-success" >Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
   </div>
 
 </template>
