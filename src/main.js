@@ -10,6 +10,10 @@ import Edit from './components/Edit.vue'
 import Delete from './components/Delete.vue'
 import Home from './components/Home.vue'
 import chartsVue from "@carbon/charts-vue";
+import sidebar from './sidebar/sidebar.vue'
+import login from './components/login.vue'
+import Dashboard from './components/Dashboard.vue'
+import  './index.css'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -17,7 +21,9 @@ const router = createRouter({
         { path: '/create', name: "Create" ,component: Create },
         { path: '/edit', name: "Edit" ,component: Edit },
         { path: '/delete',name: "Delete" ,component: Delete },
-        { path: '/', name: "Home", component: Home }
+        { path: '/', name: "Home", component: Home },
+        {path: '/login', name: "login", components: {login, Home}},
+        {path: '/dashboard', name: "logout", component: Dashboard}
     ]
 })
 

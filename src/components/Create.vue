@@ -5,9 +5,16 @@ import { reactive, ref, onMounted, onUnmounted, computed, watch } from "vue"
 import { defineConfigs, VNetworkGraphInstance, EventHandlers } from "v-network-graph"
 import { useStore } from "vuex";
 import axios from "axios";
+import { Input, Button } from 'flowbite-vue'
+import { Notyf } from 'notyf';
+import $ from 'jquery';
+import a from "dom-to-image-more";
 
+var loading = false;
+const store = useStore();
+store.state.sidebar = true;
 //  To test the graph, we need to create some nodes and edges.
-const nodes: Nodes = reactive({
+var nodes: Nodes = reactive({
   node1: { name: "node1", NodeCapacity: 3 },
   node2: { name: "node2", NodeCapacity: 3 },
   node3: { name: "node3", NodeCapacity: 3 },
@@ -16,7 +23,7 @@ const nodes: Nodes = reactive({
   node6: { name: "node6", NodeCapacity: 3 },
 })
 
-const edges: Edges = reactive({
+var edges: Edges = reactive({
   edge2: { source: "node2", target: "node3", LinkCapacity: 5 },
   edge3: { source: "node2", target: "node4", LinkCapacity: 5 },
   edge1: { source: "node1", target: "node2", LinkCapacity: 5 },
@@ -144,7 +151,7 @@ const selectedEdges = ref<string[]>([])
       selectable: true, // up to 2 edges can be selected
       normal: {
         width: 3,
-        color: "#22c55e"
+        color: "#695CFE"
       },
     },
   })
@@ -161,6 +168,27 @@ function addNode() {
   nodes[nodeId] = { name, NodeCapacity }
   nextNodeIndex.value++
   console.log(nodes)
+}
+// add topo from file json
+function addTopo(data) {
+  nextEdgeIndex.value = 1
+  nextNodeIndex.value = 1
+  for (let i = 0; i < data.devices.length; i++) {
+    console.log(data['devices'][i])
+    const nodeID = data["devices"][i]["name"]
+    const name = data["devices"][i]["name"]
+    const NodeCapacity = data["devices"][i]["NodeCapacity"]
+    nodes[nodeID] = { name, NodeCapacity }
+    nextNodeIndex.value++
+  }
+  for (let i = 0; i < data.edges.length; i++) {
+    const source = data["edges"][i]["source"]
+    const target = data["edges"][i]["target"]
+    const LinkCapacity = data["edges"][i]["LinkCapacity"]
+    const edgeId = `edge${nextEdgeIndex.value}`
+    edges[edgeId] = { source, target, LinkCapacity}
+    nextEdgeIndex.value++
+  }
 }
 
 // function to remove nodes
@@ -198,43 +226,149 @@ function removeEdge() {
 let toastclass = "initail"
 let Vname = ""
 function create() {
+  loading = true;
+  $("#spinner").attr("class", "visible");
   // appel au backend 
   axios.post('http://localhost:8000/api/Createvn/', {
     devices: nodes,
     links: edges,
     name: Vname,
-  },).catch((err) => console.log("error in post"))
+  },)
+  .then((response) => {
+    loading = false;
+    $("#spinner").attr("class", "invisible");
+    console.log(response.data)
+    if (response.data.Vn == "true") {
+      const notyf = new Notyf({
+          duration: 1000,
+          position: {
+            x: 'right',
+            y: 'bottom',
+          },
+          types: [
+            {
+              type: 'warning',
+              background: 'orange',
+              icon: {
+                className: 'material-icons',
+                tagName: 'i',
+                text: 'warning'
+              }
+            },
+            {
+              type: 'error',
+              background: 'indianred',
+              duration: 2000,
+              dismissible: true
+            }
+          ]
+        });
+        notyf.open({
+          type: 'success',
+          message: 'Virtual Network added successfully',
+          duration: 2000,
+          dismissible: false
+        });
+    }
+    else {
+      const notyf = new Notyf({
+          duration: 1000,
+          position: {
+            x: 'center',
+            y: 'bottom',
+          },
+          types: [
+            {
+              type: 'warning',
+              background: 'red',
+              icon: {
+                className: 'material-icons',
+                tagName: 'i',
+                text: 'warning'
+              }
+            },
+            {
+              type: 'error',
+              background: 'indianred',
+              duration: 2000,
+              dismissible: true
+            }
+          ]
+        });
+        notyf.open({
+          type: 'error',
+          message: 'Virtual Network not added',
+          duration: 2000,
+          dismissible: false
+        });
+    }
+      
+    }
+  )
+  .catch((err) => console.log("error in post"))
   console.log(Vname)
 }
-
-const store = useStore()
-console.log(store.state.maxdevices)
-
-
+// ref to fileInput
+const fileInput = ref<HTMLInputElement | null>(null)
+function handleFileUpload() {
+  // read the json file
+  const file = fileInput.value?.files?.[0]
+  // const file = $("#file_input").files[0]
+  console.log(file)
+  if (!file) return
+  const reader = new FileReader()
+  // delete the old nodes and edges
+  reader.onload = (event) => {
+    var contents = event.target.result;
+    const data = JSON.parse(contents as string)
+    console.log(data)
+    // clear the old nodes and edges
+    for (const nodeId of Object.keys(nodes)) {
+      delete nodes[nodeId]
+    }
+    for (const edgeId of Object.keys(edges)) {
+      delete edges[edgeId]
+    }
+    // add the new nodes and edges
+    addTopo(data)
+    console.log(nodes)
+    console.log(edges)
+}
+  reader.readAsText(file)
+}
 
 </script>
 <template>
   <div class="container">
+    <h1 class="title">Create a VN</h1>    
   <div class="configwithnetwork">
     <div class="demo-control-panel">
       <div style="margin-bottom: 3%;" class="bt">
         <label>Node:</label>
 
-          <button @click="addNode" class="button-40">Add</button>
-          <button :disabled="selectedNodes.length == 0" @click="removeNode"
-          
-          class="button-40">Remove</button
-          >
+          <!-- 
+              <button @click="addNode" class="button-40">
+                Add
+              </button> 
+          -->
+          <!-- 
+              <button :disabled="selectedNodes.length == 0" @click="removeNode"  
+              class="button-40">Remove</button> 
+          -->
+          <Button color="purple" style="margin-right: 2% ;" @click="addNode">Add</Button>
+          <Button :disabled="selectedNodes.length == 0" @click="removeNode" color="red">Delete</Button>
 
       </div>
       <div class="bt">
         <label>Edge:</label>
-        <button :disabled="selectedNodes.length != 2" @click="addEdge"
+        <!-- <button :disabled="selectedNodes.length != 2" @click="addEdge"
         class="button-40">Add</button
         >
         <button :disabled="selectedEdges.length == 0" @click="removeEdge"
           class="button-40">Remove</button
-        >
+        > -->
+        <Button :disabled="selectedNodes.length != 2" @click="addEdge" color="purple" style="margin-right: 2% ;">Add</Button>
+          <Button :disabled="selectedEdges.length == 0" @click="removeEdge" color="red">Delete</Button>
       </div>
     </div>
 
@@ -298,6 +432,10 @@ console.log(store.state.maxdevices)
       </div>
     </div>
   </div>
+  
+  <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white " for="file_input">Or Upload JSON file</label>
+  <input class="block w-1/2	 text-sm text-purple-900 border border-purple-300 rounded-lg cursor-pointer bg-purple-50 dark:text-purple-400 focus:outline-none dark:bg-purple-700 dark:border-purple-600 dark:placeholder-purple-400" id="file_input" type="file" ref="fileInput" @change="handleFileUpload" accept=".json,application/json">
+
   <form  id="linkform" >
   <div class="tables">
 
@@ -328,8 +466,10 @@ console.log(store.state.maxdevices)
           <td>{{ edgeID.target }}</td>
           <td>
             <div class="form__group field">
-              <input type="number" min="0" class="form__field" placeholder="LinkCapacity" :name='edgeID.source' :id='edgeID.source' required v-model="edgeID.LinkCapacity"/>
-              <label for="name" class="form__label">Mbps</label>
+              <!-- <input type="number" min="0" class="form__field" placeholder="LinkCapacity" :name='edgeID.source' :id='edgeID.source' required v-model="edgeID.LinkCapacity"/>
+              <label for="name" class="form__label">Mbps</label> -->
+              <input type="number" min="0" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="LinkCapacity" :name='edgeID.source' :id='edgeID.source' required v-model="edgeID.LinkCapacity">
+              <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">MBps</label>
             </div>
           </td>
         </tr>
@@ -338,10 +478,10 @@ console.log(store.state.maxdevices)
   </table>
 <!-- </form>
 <form  id="linkform" > -->
-  <table class="styled-table">
+  <table class="styled-table" >
     <thead>
       <tr>
-        <th>nodeId</th>
+        <th>NodeId</th>
         <th>NodeCapacity</th>
       </tr>     
     </thead>
@@ -350,8 +490,10 @@ console.log(store.state.maxdevices)
         <td>{{ nodeID.name }}</td>
         <td>
           <div class="form__group field">
-            <input type="number" min="0"  class="form__field" placeholder="NodeCapacity" name="name" id='name' required v-model="nodeID.NodeCapacity"/>
-            <label for="name" class="form__label">Cycle</label>
+            <!-- <input type="number" min="0"  class="form__field" placeholder="NodeCapacity" name="name" id='name' required v-model="nodeID.NodeCapacity"/>
+            <label for="name" class="form__label">Cycle</label> -->
+            <input type="number" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="LinkCapacity" name="name" id='name' required v-model="nodeID.NodeCapacity">
+              <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Core</label>
           </div>
         </td>
       </tr>
@@ -359,23 +501,45 @@ console.log(store.state.maxdevices)
   </table>
 
 </div>
-<div class="VnNameField">
-  <div class="input-group">
+<div class="VnNameField create">
+  
+  <!-- <div class="input-group">
         <input type="text" placeholder="Chose Vn Name" id="message" required v-model="Vname"/>
-  </div>
+        
+      </div> -->
+      <Input id="message" type="text" size="lg" placeholder="enter your Vn Name" label="VN Name" v-model="Vname" required>
+    <template #prefix>
+      <!-- <svg aria-hidden="true" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> -->
+    </template>
+
+    <template #suffix>
+      
+      <Button  @click.prevent="create">Create</Button>
+
+    </template>
+
+  </Input>
+
+
+
 </div>
+
 </form>
+<div id="spinner" role="status" class="invisible">
+    <svg aria-hidden="true" class="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+    </svg>
+    <span class="sr-only">Loading...</span>
+    
+</div>
 
 <div class="create">
-  <!-- <div class="form__group field">
-  <input type="text" v-model="nameVn" placeholder="Enter name of Vn" required name="Vname"/>
-  <label for="Vname" class="form__label">Vn Name</label>
-</div> -->
-
-  <button @click="create" class="button-40">Create</button>
-  <!-- <div ref="snackbar" id="snackbar" :class="toastclass" >Some text some message..</div> -->
+  <!-- <button @click="create" class="button-40">Create</button> -->
 </div>
+
   </div>
+
 </template>
 
 <style scoped lang="css">
@@ -384,6 +548,14 @@ console.log(store.state.maxdevices)
   font-family: 'Dosis', sans-serif;
 } */
 /* Toast */
+.title {
+    /* font-family: "Poppins", sans-serif; */
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--dark-alt);
+    margin-bottom: 1%;
+    margin-top: 2%;
+}
 #snackbar {
   visibility: hidden; /* Hidden by default. Visible on click */
   min-width: 250px; /* Set a default minimum width */
@@ -397,6 +569,9 @@ console.log(store.state.maxdevices)
   z-index: 1; /* Add a z-index if needed */
   left: 50%; /* Center the snackbar */
   bottom: 30px; /* 30px from the bottom */
+}
+table {
+  text-align: center;
 }
 
 /* Show the snackbar when clicking on a button (class added with JavaScript) */
@@ -432,14 +607,16 @@ console.log(store.state.maxdevices)
 
 .create{
   display: flex;
-  flex-direction: row;
+  flex-direction: columns;
   justify-content: center;
   width: 100%;
+  margin-bottom: 1%;
 }
 .VnNameField{
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center;
+  margin-bottom: 1%;
   width: 100%;
 }
 .demo-control-panel {
@@ -476,9 +653,9 @@ console.log(store.state.maxdevices)
   display: block;
   width: 100vh;
   height: 50vh;
-  border: 5px solid #22c55e;
+  border: 5px solid #707070;
   border-radius: 0.5em;
-  margin: 1% 0 0 0;
+  /* margin: 1% 0 0 0; */
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
   border-radius: 5px 5px 5px 5px;
   overflow: hidden;
@@ -488,24 +665,24 @@ console.log(store.state.maxdevices)
 .configwithnetwork{
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* align-items: center; */
   justify-content: center;
   height: max-content ;
   /* width: 100vw; */
   width: max-content;
-  margin: 0%;
-  padding: 0%;
+  /* margin: 0%;
+  padding: 0%; */
 }
 
 .button-40 {
-  background-color: #22c55e;
+  background-color: #695CFE;
   border: 1px solid transparent;
   border-radius: .75rem;
   box-sizing: border-box;
   color: #FFFFFF;
   cursor: pointer;
   flex: 0 0 auto;
-  font-family: "Inter var",ui-sans-serif,system-ui,-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  /* font-family: "Inter var",ui-sans-serif,system-ui,-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"; */
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.5rem;
@@ -543,14 +720,13 @@ console.log(store.state.maxdevices)
   border-collapse: collapse;
   margin: 5% 2% 1% 3%;
   font-size: 0.9em;
-  font-family: sans-serif;
   min-width: 400px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
   border-radius: 5px 5px 0 0;
   overflow: hidden;
 }
 .styled-table thead tr {
-  background-color: #1e293b;
+  background-color: #695CFE;
   color: #ffffff;
   text-align: left;
   font-weight: bold;
@@ -558,6 +734,8 @@ console.log(store.state.maxdevices)
 .styled-table th,
 .styled-table td {
   padding: 12px 15px;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .styled-table tbody tr {
@@ -568,7 +746,7 @@ console.log(store.state.maxdevices)
   background-color: #f3f3f3;
 }
 .styled-table tbody tr:last-of-type {
-  border-bottom: 2px solid #22c55e;
+  border-bottom: 2px solid #695CFE;
 }
 
 /* toolip style */
@@ -594,9 +772,8 @@ console.log(store.state.maxdevices)
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* width: 100vw; */
   width: max-content;
-  margin: 1% 1% 1% 1%;
+
   padding: 0%;
   height: max-content;
 }

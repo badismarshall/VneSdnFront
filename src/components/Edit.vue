@@ -4,7 +4,10 @@ import HelloWorld from './HelloWorld.vue';
 import VirtualGraph from './VirtualGraph.vue';
 import axios from 'axios';
 import { reactive } from 'vue';
+import { useStore } from "vuex";
 
+const store = useStore();
+store.state.sidebar = true;
 let VirtualNetworks = reactive([])
 axios.get('http://localhost:8000/api/virtualNetworks/')
       .then((response) => {
@@ -33,13 +36,24 @@ function recivedData(data){
 </script>
 <template>
   <div class="container">
-    <div class="controle">
-      <select class="select  form-select" aria-label="Default select example" v-model="selectedVn">
+    <h1 class="title">Vn Topo</h1>
+    <!-- <div class="controle"> -->
+      <!-- <select class="select  form-select" aria-label="Default select example" v-model="selectedVn">
         <option selected value="0">Chose a VN</option>
         <option v-for="Vn in VirtualNetworks" :value="Vn.id">{{Vn.name}}</option>
+      </select> -->
+      <label for="countries" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Select a Vn</label>
+      <select v-model="selectedVn" id="countries" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+        <option selected value="0">Chose a VN</option>
+        <option v-for="Vn in VirtualNetworks" :value="Vn.id">{{Vn.name}}</option>
+        <!-- <option selected>Choose a country</option>
+        <option value="US">United States</option>
+        <option value="CA">Canada</option>
+        <option value="FR">France</option>
+        <option value="DE">Germany</option> -->
       </select>
-      <button @click="visualize" class="button-40">Visualize</button>
-  </div>
+      <!-- <button @click="visualize" class="button-40">Visualize</button> -->
+  <!-- </div> -->
     <div class="first"> 
         <HelloWorld class="networkx" :vnid="selectedVn"/>
         <VirtualGraph class="networkx" :vnid="selectedVn" @selctevent="recivedData"/>
@@ -62,12 +76,26 @@ function recivedData(data){
   margin: 0 0 0 3%;
   height: 60px;
 }
+.title {
+    /* font-family: "Poppins", sans-serif; */
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--dark-alt);
+    margin-bottom: 1%;
+    margin-top: 2%;
+}
 
+h1 {
+  text-align: center;
+  margin: 2%;
+  padding: 0%;
+  left: 0%;
+}
 /* ------------------------------ */
 .controle {
   display: flex;
   flex-direction: row;
-  justify-content: start;
+  justify-content: flex-start;
   padding: 0%;
 }
 .container {
@@ -84,7 +112,7 @@ function recivedData(data){
   display: flex;
   margin: 1%;
   flex-direction: row;
-  justify-content: end;
+  justify-content: flex-end;
   margin: 0% 0 0 0;
   padding: 2%;
   height: 90vw;
@@ -104,8 +132,7 @@ function recivedData(data){
   display: block;
   width: 50%;
   height: 26%;
-  /* border: 5px solid #5b41f2; */
-  border: 5px solid #4ade80;
+  border: 5px solid #6B7280;
   border-radius: 0.5em;
   margin: 1% 0 0 0;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);

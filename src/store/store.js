@@ -6,6 +6,7 @@ const store =  createStore({
     state: {
     name: '',
     maxdevices: 0,
+    sidebar: false,
     }
 });
 

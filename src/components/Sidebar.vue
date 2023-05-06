@@ -59,13 +59,15 @@ aside {
 	background-color: var(--dark);
 	color: var(--light);
 	width: calc(2rem + 32px);
-	// overflow: hidden;
+	overflow: hidden;
 	overflow-x: hidden;
 	min-height: 100vh;
 	padding: 1rem;
 	transition: 0.2s ease-in-out;
 	top: 0; /* Stay at the top */
 	left: 0;
+	// position: fixed;
+	// z-index: 1;
 	.flex {
 		flex: 1 1 0%;
 	}
@@ -171,7 +173,7 @@ aside {
 	}
 	@media (max-width: 1920px) {
 		position: fixed;
-		z-index: 20;
+		z-index: 30;
 	}
 }
 
