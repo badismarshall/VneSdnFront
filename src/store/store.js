@@ -7,6 +7,7 @@ const store =  createStore({
     name: '',
     maxdevices: 0,
     sidebar: false,
+    link : Object,
     }
 });
 

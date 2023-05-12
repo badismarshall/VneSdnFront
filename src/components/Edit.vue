@@ -21,6 +21,7 @@ function addVns(vns){
   VirtualNetworks.push(...vns)
 }
 const selectedVn = ref(0)
+const slectedlink = ref(Object)
 
 function visualize(){
   console.log(selectedVn.value)
@@ -55,8 +56,8 @@ function recivedData(data){
       <!-- <button @click="visualize" class="button-40">Visualize</button> -->
   <!-- </div> -->
     <div class="first"> 
-        <HelloWorld class="networkx" :vnid="selectedVn"/>
-        <VirtualGraph class="networkx" :vnid="selectedVn" @selctevent="recivedData"/>
+        <HelloWorld class="networkx" :vnid="selectedVn" :link="slectedlink"/>
+        <VirtualGraph class="networkx" :vnid="selectedVn" @selctevent="recivedData" />
     </div>
     
   </div>
@@ -130,8 +131,8 @@ h1 {
 
 .networkx {
   display: block;
-  width: 50%;
-  height: 26%;
+  width: 60%;
+  height: 30%;
   border: 5px solid #6B7280;
   border-radius: 0.5em;
   margin: 1% 0 0 0;

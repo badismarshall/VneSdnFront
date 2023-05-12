@@ -12,6 +12,8 @@ import {
   ForceEdgeDatum,
 } from "v-network-graph/lib/force-layout"
 import { remove } from "@vue/shared";
+const store = useStore();
+const paths = ref<vNG.Paths>({})
 
 // get the nodes topology from the backend
 // setInterval(() =>{
@@ -49,18 +51,49 @@ const changedElements = [];
 const changedIndices = [];
 
 const props = defineProps<{
-  vnid: Number
+  vnid: Number,
+  link : Object
 }>()
 
 //  watch the vnid and update the graph
 watch(() => props.vnid, (newVnid) => {
-  if (newVnid == 0) return
+  // if (newVnid == 0) return
+  // if (Edgechangedcolor.length > 0){
+  //   Edgechangedcolor.forEach((link) => {
+  //     edges[link].color = "#4466cc"
+  //   })
+  // }
+  // axios.get("http://localhost:8000/api/Getvn/" + newVnid)
+  //   .then((response) => {
+  //     let vn = JSON.stringify(response.data)
+  //     vn = JSON.parse(vn)
+  //     let tempNodes = vn['logicalnodes']
+  //     let tempEdges = vn['logicallinks']
+
+  //     // for (let i = 0; i < tempNodes.length; i++) {
+  //     //   const node = tempNodes[i];
+  //     //   nodes[node['substrate_node']] = node
+  //     // }
+
+  //     for (let i = 0; i < tempEdges.length; i++) {
+  //       const edge = tempEdges[i]
+  //       changeEdgeColor(edge)
+       
+  //     }
+  //   })
+  
+
+})
+
+// watch store.state.link
+watch(() => store.state.link, (newLink) => {
+  if (props.vnid == 0) return
   if (Edgechangedcolor.length > 0){
     Edgechangedcolor.forEach((link) => {
       edges[link].color = "#4466cc"
     })
   }
-  axios.get("http://localhost:8000/api/Getvn/" + newVnid)
+  axios.get("http://localhost:8000/api/Getvn/" + props.vnid)
     .then((response) => {
       let vn = JSON.stringify(response.data)
       vn = JSON.parse(vn)
@@ -73,14 +106,19 @@ watch(() => props.vnid, (newVnid) => {
       // }
 
       for (let i = 0; i < tempEdges.length; i++) {
+        if(tempEdges[i]['source_logical_node'] == newLink['source'] && tempEdges[i]['target_logical_node'] == newLink['target']){
+          console.log("edgeeeeeeeeeeeeeeeee", tempEdges[i])
         const edge = tempEdges[i]
         changeEdgeColor(edge)
-       
+        }
+
       }
     })
-  
-
+    console.log("newLinkkkkk", newLink)
 })
+
+
+
 function changeEdgeColor(edge){
   console.log("edge", edge['substrate_links'])
   for (let i = 0; i < edge['substrate_links'].length; i++){
@@ -98,6 +136,7 @@ function changeEdgeColor(edge){
     // edges[`edge${sublink}`].color = "green"
   }
 }
+
 function Getsubstratenodebyid(sourceId, targetID){
   axios.get("http://localhost:8000/api/Getsubstratenodesbyid/" + sourceId)
       .then((response) => {
@@ -117,6 +156,7 @@ function Getsubstratenodebyid(sourceId, targetID){
       })
       .catch((error) => console.log(error));
 }
+
 function findedge(source, target){
   for (let link in edges){
         // console.log("source", source, "target", target)
@@ -128,6 +168,7 @@ function findedge(source, target){
         }
       }
 }
+
 let Edgechangedcolor = reactive([])
 function changecolorofedge(link){
   Edgechangedcolor.push(link)
@@ -221,11 +262,11 @@ setInterval(()=>{
   axios.get('http://localhost:8000/api/statistics/').then((response) => {
     let data = JSON.stringify(response.data)
     data = JSON.parse(data)
-    console.log(data['statistics'][0])
+    // console.log(data['statistics'][0])
     for(let edge in edges){
       for (let x = 0; x < data['statistics'].length; x++){
         if (edges[edge].source == data['statistics'][x]['device']){
-          console.log(data['statistics'][x]['ports'][edges[edge].port - 1]['bytesSent'])
+          // console.log(data['statistics'][x]['ports'][edges[edge].port - 1]['bytesSent'])
           if(data['statistics'][x]['ports'][edges[edge].port - 1]['bytesSent'] > 700){
             edges[edge].color = 'red'
           }
@@ -245,6 +286,7 @@ const edges = reactive({})
 const layouts = data.layouts
 const nextNodeIndex = ref(0)
 const nextEdgeIndex = ref(0)
+const selectedEdges = ref<string[]>([])
 
 // fuction to add nodes
 function addNode(node) {
@@ -277,10 +319,32 @@ function addEdge(link) {
   const color = "#4466cc"
 
   const edgeId = `edge${nextEdgeIndex.value}`
-  const LinkCapacity = 5
+  let LinkCapacity = ref(11)
+  // axios.get('http://localhost:8000/api/Getsubstratelinksbyname/' + source + "-" + target).then((response) => {
+  //   let links = JSON.stringify(response.data)
+  //   links = JSON.parse(links)
+  //   // console.log(links['substratelinks']['bandwidth'])
+  //   LinkCapacity = links['substratelinks']['bandwidth']  
+  //   addlinkcapacity(LinkCapacity, link)
+  //   // edges[edgeId] = { source, target, LinkCapacity, port, color }
+  // }
+  // )
+  console.log(LinkCapacity);
+  
   edges[edgeId] = { source, target, LinkCapacity, port, color }
   // traffics[source] = { ...traffics[source], [target]: 0 }
   // traffics[target] = { ...traffics[target], [source]: 0 }
+  nextEdgeIndex.value++
+}
+
+function addlinkcapacity(LinkCapacity, link){
+  const source = link['source']
+  const target = link['target']
+  const port = link['port']
+  const color = "#4466cc"
+  const linkCapacity = LinkCapacity
+  const edgeId = `edge${nextEdgeIndex.value}`
+  edges[edgeId] = { source, target, linkCapacity, port, color }
   nextEdgeIndex.value++
 }
 
@@ -333,6 +397,7 @@ const configs = reactive(
         margin: 4,
         direction: "south",
         text: "name",
+        directionAutoAdjustment: true,
       },
       focusring: {
         visible: true,
@@ -345,9 +410,18 @@ const configs = reactive(
       normal: {
         color: edge => edge.color,
         animate: edge => (edge.color == '#4466cc' ? false : true),
-        dasharray: edge => (edge.color == '#4466cc' ? 0 : 5),
-        
-      }
+        dasharray: edge => (edge.color == '#4466cc' ? 0 : 0),  
+      },
+      label : {
+            color: "#e32d2d",
+            fontFamily: "Poppins",
+      },
+      selectable: 1,
+      selected: {
+        color: "#695CFE",
+        width: 2,
+        dasharray: "9",
+      },  
     }
   })
 )
@@ -403,7 +477,7 @@ function buildNetwork(count: number, nodes: vNG.Nodes, edges: vNG.Edges) {
 //   },
 // }
 const name = computed(() => store.state.name)
-const store = useStore();
+
 
 console.log(store.state.maxdevices)
 
@@ -425,12 +499,16 @@ console.log(store.state.maxdevices)
   
   <v-network-graph
     v-model:selected-nodes="selectedNodes"
+    v-model:selected-edges="selectedEdges"
     :nodes="nodes"
     :edges="edges"
     :layouts="layouts"
     :configs="configs"
     :zoom-level="0.7"
   >
+          <!-- <template #edge-label="{ edge, ...slotProps }">
+            <v-edge-label :text="edge.LinkCapacity" align="center" vertical-align="above" v-bind="slotProps"/>
+        </template> -->
           <template #override-node="{ nodeId, scale, config, ...slotProps }">
             <!--
             The base position of the <image /> is top left. The node's

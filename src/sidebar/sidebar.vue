@@ -40,7 +40,7 @@ modeSwitch.addEventListener("click" , () =>{
         <header>
             <div class="image-text">
                 <span class="image">
-                    <img src="./logo.png" alt="">
+                    <img src="./neural.png" alt="">
                 </span>
 
                 <div class="text logo-text">
@@ -62,7 +62,7 @@ modeSwitch.addEventListener("click" , () =>{
 
                 <ul class="menu-links">
                     <li class="nav-link">
-                        <RouterLink to="/">
+                        <RouterLink to="/home">
                             <a href="#">
                                 <i class='bx bx-home-alt icon' ></i>
                                 <span class="text nav-text">Home</span>
@@ -129,7 +129,7 @@ modeSwitch.addEventListener("click" , () =>{
     </nav>
 
 </template>
-<style >
+<style>
 /* Google Font Import - Poppins */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 *{

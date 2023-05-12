@@ -110,7 +110,7 @@ onMounted(() => {
     data: VirtualNetworks,
     ajax: {
       url: 'http://localhost:8000/api/virtualNetworks/',
-      dataSrc: 'virtualnetworks'
+      dataSrc: 'virtualnetworks', 
     },
     columns: [
       { data: 'id' },

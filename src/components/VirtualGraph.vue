@@ -11,6 +11,7 @@ import {
   ForceEdgeDatum,
 } from "v-network-graph/lib/force-layout"
 import { generateCodeFrame } from "@vue/shared";
+import { Reactive } from "v-network-graph/lib/common/common";
 const props = defineProps<{
   vnid: Number
 }>()
@@ -56,7 +57,7 @@ const emitVn = defineEmits<{
 }>()
 
 function addNode(node) {
-  const nodeId = `node${node['id']}`
+  const nodeId = `${node['id']}`
   const name = node['name']
   const NodeCapacity = node['capacity']
   nodes[nodeId] = { name, NodeCapacity }
@@ -64,10 +65,10 @@ function addNode(node) {
 
 function addEdge(edge) {
   const edgeId = edge['id']
-  const source = `node${edge['source_logical_node']}`
-  const target = `node${edge['target_logical_node']}`
-  const linkCapacity = edge['bandwidth']
-  edges[edgeId] = { source, target, linkCapacity }
+  const source = `${edge['source_logical_node']}`
+  const target = `${edge['target_logical_node']}`
+  const label = edge['bandwidth'] + " Mbps"
+  edges[edgeId] = { source, target, label }
 }
 
 const NODE_COUNT = 20
@@ -91,7 +92,19 @@ const NODE_RADIUS = 16
 const targetNodeId = ref<string>("")
 const tooltipOpacity = ref(0) // 0 or 1
 const tooltipPos = ref({ left: "0px", top: "0px"})
+const selectedEdges = ref<string[]>([])
+// watch selectedEdges
+const store = useStore();
+watch(
+  () => selectedEdges.value,
+  () => {
+      console.log("selectedEdges", edges[selectedEdges.value[0]])
+      store.state.link = edges[selectedEdges.value[0]]
+      console.log("store.state.link", store.state.link)
 
+  },
+  { deep: true }
+)
 const targetNodePos = computed(() => {
   const nodePos = layouts.value.nodes[targetNodeId.value]
   return nodePos || { x: 0, y: 0 }
@@ -137,7 +150,7 @@ const configs = reactive(
           const forceLink = d3.forceLink<ForceNodeDatum, ForceEdgeDatum>(edges).id(d => d.id)
           return d3
             .forceSimulation(nodes)
-            .force("edge", forceLink.distance(150))
+            .force("edge", forceLink.distance(100).strength(0.1))
             .force("charge", d3.forceManyBody())
             .force("collide", d3.forceCollide(50).strength(0.2))
             .force("center", d3.forceCenter().strength(0.05))
@@ -150,13 +163,22 @@ const configs = reactive(
         color: n => (n.id === "node0" ? "#ff0000" : "#4466cc"),
       },
       label: {
-        visible: false,
+        visible: true,
+        directionAutoAdjustment: true,
       },
     },
     edge:{
         label:{
             color: "#e32d2d",
-        }
+            fontFamily: "Poppins",
+            visible: true,
+        },
+        selectable: 1,
+        selected: {
+            color: "red",
+            width: 3,
+            dasharray: "9",
+        },
     }
   })
 )
@@ -165,10 +187,11 @@ const configs = reactive(
 //   (event: "hovred", payload: { node: string }): void
 // }>()
 
-const store = useStore();
+
 
 const eventHandlers: vNG.EventHandlers = {
   "node:pointerover": ({ node }) => {
+    console.log("node:pointerover", node)
     targetNodeId.value = node
     tooltipOpacity.value = 1 // show
     // emit("hovred", { node: node })
@@ -182,7 +205,10 @@ const eventHandlers: vNG.EventHandlers = {
     store.state.name = ''
     console.log(store.state.name)
   },
-
+  // "edge:select": ( edge ) => {
+  //   console.log("edge:select", edges[edge])
+  //   // selectedEdges.value = [edge]
+  // },
 }
 
 const name = computed(() => store.state.name);
@@ -192,14 +218,15 @@ console.log(store.state.name)
 </script>
 
 <template>
-<!-- <div class="tooltip-wrapper"> -->
+<div class="tooltip-wrapper">
   <v-network-graph
     :nodes="nodes"
     :edges="edges"
+    ref="graph"
     v-model:layouts="layouts"
     :configs="configs"
     :event-handlers="eventHandlers"
-    :zoom-level="0.7"
+    v-model:selected-edges="selectedEdges"
     >
         <template #edge-label="{ edge, ...slotProps }">
             <v-edge-label :text="edge.label" align="center" vertical-align="above" v-bind="slotProps"/>
@@ -219,27 +246,29 @@ console.log(store.state.name)
             
     </template>
   </v-network-graph>
-    <!-- <div
+    <div
       ref="tooltip"
       class="tooltip"
       :style="{ ...tooltipPos, opacity: tooltipOpacity }"
     >
-      <div>{{ data.nodes[targetNodeId]?.name ?? "" }}</div>
-    </div> -->
+      <div>{{ nodes[targetNodeId]?.name ?? "" }}</div>
+      <div>{{ nodes[targetNodeId]?.NodeCapacity ?? "" }}
+    </div>
+    </div>
 
-<!-- </div> -->
+</div>
 </template>
 
 <style scoped>
 
-/* 
+
 .tooltip {
   top: 0;
   left: 0;
   opacity: 0;
   position: absolute;
-  width: 50px;
-  height: 20px;
+  width: 90px;
+  height: 50px;
   padding: 10px;
   text-align: center;
   font-size: 12px;
@@ -251,6 +280,6 @@ console.log(store.state.name)
 }
 .tooltip-wrapper {
   position: relative;
-} */
+}
 
 </style>

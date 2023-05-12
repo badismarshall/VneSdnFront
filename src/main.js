@@ -21,8 +21,8 @@ const router = createRouter({
         { path: '/create', name: "Create" ,component: Create },
         { path: '/edit', name: "Edit" ,component: Edit },
         { path: '/delete',name: "Delete" ,component: Delete },
-        { path: '/', name: "Home", component: Home },
-        {path: '/login', name: "login", components: {login, Home}},
+        { path: '/home', name: "Home", component: Home },
+        {path: '/', name: "login", components: {login, Home}},
         {path: '/dashboard', name: "logout", component: Dashboard}
     ]
 })

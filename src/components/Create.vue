@@ -146,6 +146,9 @@ const selectedEdges = ref<string[]>([])
         width: 3,
         padding: 12,
       },
+      label : {
+        directionAutoAdjustment: true,
+      }
     },
     edge: {
       selectable: true, // up to 2 edges can be selected
