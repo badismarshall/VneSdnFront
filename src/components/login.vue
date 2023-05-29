@@ -20,7 +20,7 @@ function loginfun() {
         console.log(response.data['status']);
         if (response.data['status'] == "success") {
             store.state.sidebar = true;
-            router.push({ path: '/' });
+            router.push({ path: '/home' });
         }
         else {
             const notyf = new Notyf({

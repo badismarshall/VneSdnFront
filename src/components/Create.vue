@@ -9,6 +9,7 @@ import { Input, Button } from 'flowbite-vue'
 import { Notyf } from 'notyf';
 import $ from 'jquery';
 import a from "dom-to-image-more";
+import data from "../../data2";
 
 var loading = false;
 const store = useStore();
@@ -16,32 +17,32 @@ store.state.sidebar = true;
 //  To test the graph, we need to create some nodes and edges.
 var nodes: Nodes = reactive({
   node1: { name: "node1", NodeCapacity: 3 },
-  node2: { name: "node2", NodeCapacity: 3 },
-  node3: { name: "node3", NodeCapacity: 3 },
-  node4: { name: "node4", NodeCapacity: 3 },
-  node5: { name: "node5", NodeCapacity: 3 },
-  node6: { name: "node6", NodeCapacity: 3 },
+  // node2: { name: "node2", NodeCapacity: 3 },
+  // node3: { name: "node3", NodeCapacity: 3 },
+  // node4: { name: "node4", NodeCapacity: 3 },
+  // node5: { name: "node5", NodeCapacity: 3 },
+  // node6: { name: "node6", NodeCapacity: 3 },
 })
 
 var edges: Edges = reactive({
-  edge2: { source: "node2", target: "node3", LinkCapacity: 5 },
-  edge3: { source: "node2", target: "node4", LinkCapacity: 5 },
-  edge1: { source: "node1", target: "node2", LinkCapacity: 5 },
-  edge4: { source: "node4", target: "node5", LinkCapacity: 5 },
-  edge5: { source: "node4", target: "node6", LinkCapacity: 5 },
+  // edge2: { source: "node2", target: "node3", LinkCapacity: 5 },
+  // edge3: { source: "node2", target: "node4", LinkCapacity: 5 },
+  // edge1: { source: "node1", target: "node2", LinkCapacity: 5 },
+  // edge4: { source: "node4", target: "node5", LinkCapacity: 5 },
+  // edge5: { source: "node4", target: "node6", LinkCapacity: 5 },
 })
 
 const layouts: Layouts = {
   nodes: {
     node1: { x: 0, y: 0 },
-    node2: { x: 80, y: 80 },
-    node3: { x: 0, y: 160 },
-    node4: { x: 240, y: 80 },
-    node5: { x: 320, y: 0 },
-    node6: { x: 320, y: 160 },
+    // node2: { x: 80, y: 80 },
+    // node3: { x: 0, y: 160 },
+    // node4: { x: 240, y: 80 },
+    // node5: { x: 320, y: 0 },
+    // node6: { x: 320, y: 160 },
   },
 }
-
+// const layouts = ref(data.layouts)
 type TrafficData = Record<string, Record<string, number>>
 
 const traffics = reactive<TrafficData>({
@@ -228,6 +229,7 @@ function removeEdge() {
 
 let toastclass = "initail"
 let Vname = ""
+let Vnid = 0
 function create() {
   loading = true;
   $("#spinner").attr("class", "visible");
@@ -236,6 +238,7 @@ function create() {
     devices: nodes,
     links: edges,
     name: Vname,
+    Vnid: Vnid + 1,
   },)
   .then((response) => {
     loading = false;
@@ -272,6 +275,7 @@ function create() {
           duration: 2000,
           dismissible: false
         });
+        Vnid = Vnid + 1
     }
     else {
       const notyf = new Notyf({

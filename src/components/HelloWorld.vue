@@ -172,7 +172,7 @@ function findedge(source, target){
 let Edgechangedcolor = reactive([])
 function changecolorofedge(link){
   Edgechangedcolor.push(link)
-  edges[link].color = "green"
+  edges[link].color = "purple"
 }
 const equalsCheck = (a, b) => {
     return JSON.stringify(a) === JSON.stringify(b);
